@@ -5,6 +5,9 @@ import { defineConfig } from 'vite';
 
 export default defineConfig({
     base: '/dashboard',
+    server: {
+        host: '0.0.0.0',
+    },
     build: {
         outDir: join(__dirname, 'dist/dashboard'),
     },

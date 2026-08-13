@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: vendure
+spec:
+  replicas: {{ .Values.server.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: vendure
+
+  template:
+    metadata:
+      labels:
+        app: vendure
+
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      containers:
+        - name: vendure
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          ports:
+            - name: http
+              containerPort: 3000
+              protocol: TCP
+
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-config
+
+            - secretRef:
+                name: {{ .Release.Name }}-secret
+
+          resources:
+            {{- toYaml .Values.server.resources | nindent 12 }}

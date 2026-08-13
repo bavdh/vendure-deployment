@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker
+  labels:
+    app: vendure-worker
+spec:
+  replicas: {{ .Values.worker.replicaCount }}
+
+  selector:
+    matchLabels:
+      app: vendure-worker
+
+  template:
+    metadata:
+      labels:
+        app: vendure-worker
+
+    spec:
+      securityContext:
+        {{- toYaml .Values.podSecurityContext | nindent 8 }}
+
+      containers:
+        - name: vendure-worker
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          command: ["node", "dist/index-worker.js"]
+
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-config
+
+            - secretRef:
+                name: {{ .Release.Name }}-secret
+
+          resources:
+            {{- toYaml .Values.worker.resources | nindent 12 }}

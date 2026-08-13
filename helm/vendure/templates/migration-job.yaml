@@ -30,57 +30,12 @@ spec:
 
           command: ["node", "dist/migrate.js"]
 
-          env:
-            - name: APP_ENV
-              value: {{ .Values.env.appEnv | quote }}
+          envFrom:
+            - configMapRef:
+                name: {{ .Release.Name }}-config
 
-            - name: DB_HOST
-              value: {{ .Values.env.db.host | quote }}
-
-            - name: DB_PORT
-              value: {{ .Values.env.db.port | quote }}
-
-            - name: DB_NAME
-              value: {{ .Values.env.db.name | quote }}
-
-            - name: DB_SCHEMA
-              value: {{ .Values.env.db.schema | quote }}
-
-            - name: REDIS_HOST
-              value: {{ .Values.env.redis.host | quote }}
-
-            - name: REDIS_PORT
-              value: {{ .Values.env.redis.port | quote }}
-
-            - name: DB_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secret
-                  key: DB_USERNAME
-
-            - name: DB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secret
-                  key: DB_PASSWORD
-
-            - name: SUPERADMIN_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secret
-                  key: SUPERADMIN_USERNAME
-
-            - name: SUPERADMIN_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secret
-                  key: SUPERADMIN_PASSWORD
-
-            - name: COOKIE_SECRET
-              valueFrom:
-                secretKeyRef:
-                  name: {{ .Release.Name }}-secret
-                  key: COOKIE_SECRET
-
+            - secretRef:
+                name: {{ .Release.Name }}-secret
+          
           resources:
             {{- toYaml .Values.resources | nindent 12 }}

@@ -1,0 +1,7 @@
+apiVersion: v2
+name: vendure
+description: A Helm chart for deploying a Vendure application
+type: application
+
+version: 0.1.0
+appVersion: "3.7.2"

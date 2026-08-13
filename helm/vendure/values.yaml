@@ -1,0 +1,59 @@
+replicaCount: 1
+
+worker:
+  replicaCount: 1
+
+  resources:
+    requests:
+      cpu: 100m
+      memory: 256Mi
+    limits:
+      cpu: 500m
+      memory: 512Mi
+
+image:
+  repository: ghcr.io/your-github-username/vendure-assignment
+  pullPolicy: IfNotPresent
+  tag: latest
+
+service:
+  type: ClusterIP
+  port: 3000
+
+env:
+  appEnv: production
+
+  db:
+    host: ""
+    port: 5432
+    name: vendure
+    schema: public
+
+  redis:
+    host: ""
+    port: 6379
+
+secrets:
+  dbUsername: ""
+  dbPassword: ""
+  superadminUsername: ""
+  superadminPassword: ""
+  cookieSecret: ""
+
+resources:
+  requests:
+    cpu: 250m
+    memory: 512Mi
+  limits:
+    cpu: 1000m
+    memory: 1Gi
+
+serviceAccount:
+  create: true
+  name: ""
+
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  runAsGroup: 1000
+  fsGroup: 1000

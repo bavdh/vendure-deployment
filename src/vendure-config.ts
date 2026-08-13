@@ -1,6 +1,5 @@
 import {
     dummyPaymentHandler,
-    DefaultJobQueuePlugin,
     DefaultSchedulerPlugin,
     DefaultSearchPlugin,
     VendureConfig,

@@ -38,4 +38,4 @@ spec:
                 name: {{ .Release.Name }}-secret
           
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.migration.resources | nindent 12 }}

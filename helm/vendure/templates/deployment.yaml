@@ -5,7 +5,7 @@ metadata:
   labels:
     app: vendure
 spec:
-  replicas: {{ .Values.replicaCount }}
+  replicas: {{ .Values.server.replicaCount }}
 
   selector:
     matchLabels:
@@ -38,4 +38,4 @@ spec:
                 name: {{ .Release.Name }}-secret
 
           resources:
-            {{- toYaml .Values.resources | nindent 12 }}
+            {{- toYaml .Values.server.resources | nindent 12 }}

@@ -1,6 +1,6 @@
 # vendure-assignment
 
-This project was generated with [`@vendure/create`](https://github.com/vendurehq/vendure/tree/master/packages/create).
+This project is a Vendure-based e-commerce backend with a server, worker, dashboard, PostgreSQL database, and Redis. It includes local development, Docker, Kubernetes, and GitHub Actions workflows for building, testing, and deploying the application.
 
 Useful links:
 
@@ -9,92 +9,148 @@ Useful links:
 - [Vendure on GitHub](https://github.com/vendurehq/vendure)
 - [Vendure plugin template](https://github.com/vendurehq/plugin-template)
 
+## Architecture
+
+The Vendure server and worker are deployed as separate workloads, allowing them to be scaled and managed independently based on their respective responsibilities. The server handles API requests and customer traffic, while the worker processes background jobs and can be scaled independently without affecting the server workload.
+
+The Dashboard is built as a static frontend application and served by the Vendure server through DashboardPlugin. Since it does not require a separate backend runtime, it is deployed alongside the server, keeping the Dashboard and API versioned and released together.
+
 ## Directory structure
 
-* `/src` contains the source code of your Vendure server. All your custom code and plugins should reside here.
-* `/static` contains static (non-code) files such as assets (e.g. uploaded images) and email templates.
+- `/src` contains the source code of the Vendure server, including the main configuration, custom code, GraphQL definitions, and database migrations.
+- `/helm` contains the Helm chart used to deploy the application to Kubernetes, including chart configuration, values, and Kubernetes resource templates.
+- `/docker-compose.yml` defines the local Docker Compose environment used for development.
+- `/docker-compose-production.yml` defines the Docker Compose configuration for running the application in a production-like environment.
+- `/Dockerfile` contains the multi-stage Docker build configuration used to build the production application image.
+- `/.github/workflows` contains the GitHub Actions workflows used for pull request validation and building and publishing Docker images.
+- `/.husky` contains the Git hooks used by Husky. The pre-commit hook runs the project's linting, TypeScript type checking, and Helm validation before a commit is created.
+- `/package.json` defines the project's dependencies, development dependencies, npm scripts, and project configuration.
 
-## Development
+## Prerequisits
 
+- Node.js 22+
+- npm
+- Docker
+- Docker Compose
+- kubectl
+- Helm
+
+## Local Development
+
+### Running with npm
+
+Install dependencies:
+
+```bash
+npm ci
 ```
+
+Start the complete Vendure development environment:
+
+```bash
 npm run dev
 ```
 
-will start the Vendure server, [worker](https://www.vendure.io/docs/developer-guide/vendure-worker/) and Dashboard.
+Individual processes can also be started separately:
 
-## Build
-
-```
-npm run build
-```
-
-will compile the TypeScript sources and build the Dashboard into the `/dist` directory.
-
-## Production
-
-For production, there are many possibilities which depend on your operational requirements as well as your production
-hosting environment.
-
-### Running directly
-
-You can run the built files directly with the `start` script:
-
-```
-npm run start
+```bash
+npm run dev:server
+npm run dev:worker
+npm run dev:dashboard
 ```
 
-You could also consider using a process manager like [pm2](https://pm2.keymetrics.io/) to run and manage
-the server & worker processes.
+## Code Quality & Pre-commit
 
-### Using Docker
+Husky is used to run project checks automatically before a Git commit is created.
 
-We've included a sample [Dockerfile](./Dockerfile) which you can build with the following command:
+The current pre-commit checks are:
 
-```
-docker build -t vendure .
-```
-
-This builds an image and tags it with the name "vendure". We can then run it with:
-
-```
-# Run the server
-docker run -dp 3000:3000 -e "DB_HOST=host.docker.internal" --name vendure-server vendure npm run start:server
-
-# Run the worker
-docker run -dp 3000:3000 -e "DB_HOST=host.docker.internal" --name vendure-worker vendure npm run start:worker
+```text
+Git commit
+    │
+    ├── ESLint
+    ├── TypeScript typecheck
+    └── Helm lint
 ```
 
-Here is a breakdown of the command used above:
+### ESLint
 
-- `docker run` - run the image we created with `docker build`
-- `-dp 3000:3000` - the `-d` flag means to run in "detached" mode, so it runs in the background and does not take
-control of your terminal. `-p 3000:3000` means to expose port 3000 of the container (which is what Vendure listens
-on by default) as port 3000 on your host machine.
-- `-e "DB_HOST=host.docker.internal"` - the `-e` option allows you to define environment variables. In this case we
-are setting the `DB_HOST` to point to a special DNS name that is created by Docker desktop which points to the IP of
-the host machine. Note that `host.docker.internal` only exists in a Docker Desktop environment and thus should only be
-used in development.
-- `--name vendure-server` - we give the container a human-readable name.
-- `vendure` - we are referencing the tag we set up during the build.
-- `npm run start:server` - this last part is the actual command that should be run inside the container.
+Run ESLint manually with:
 
-### Docker Compose
+```bash
+npm run lint
+```
 
-We've included a [docker-compose.yml](./docker-compose.yml) file which includes configuration for commonly-used
-services such as PostgreSQL, MySQL, MariaDB, Elasticsearch and Redis.
+### TypeScript typecheck
 
-To use Docker Compose, you will need to have Docker installed on your machine. Here are installation
-instructions for [Mac](https://docs.docker.com/desktop/install/mac-install/), [Windows](https://docs.docker.com/desktop/install/windows-install/),
-and [Linux](https://docs.docker.com/desktop/install/linux/).
+Run the TypeScript compiler without producing output:
 
-You can start the services with:
+```bash
+npm run typecheck
+```
 
-```shell
-docker-compose up <service>
+### Helm lint
 
-# examples:
-docker-compose up postgres_db
-docker-compose up redis
+Validate the Helm chart with:
+
+```bash
+helm lint ./helm/vendure
+```
+
+### Husky
+
+Husky is initialized through npm's `prepare` lifecycle script so that Git hooks are configured automatically after installing project dependencies.
+
+The production Docker image does not install Husky because Git hooks are not required inside the runtime container.
+
+## Running with Docker Compose
+
+The development environment is defined in docker-compose.yml.
+Build and start the Docker Compose environment with:
+
+```bash
+docker compose -f docker-compose.yaml up --build
+```
+
+To run in the background:
+
+```bash
+docker compose -f docker-compose.yaml up --build -d
+```
+
+Stop the environment with:
+
+```bash
+docker compose -f docker-compose.yaml down
+```
+
+## Running the Production Environment with Docker Compose
+
+The production-like environment is defined in docker-compose-production.yml.
+The Compose file expects a Docker image tagged as `vendure-assignment:production`.
+
+Build the production image:
+
+```bash
+docker build -t vendure-assignment:production .
+```
+
+Start the production environment
+
+```bash
+docker compose -f docker-compose-production.yml up
+```
+
+To run it in the background:
+
+```bash
+docker compose -f docker-compose-production.yml up -d
+```
+
+Stop the environment with:
+
+```bash
+docker compose -f docker-compose-production.yml down
 ```
 
 ## Plugins
@@ -122,19 +178,73 @@ npx vendure migrate
 ```
 
 The generated migration file will be found in the `./src/migrations/` directory, and should be committed to source control.
-Next time you start the server, and outstanding migrations found in that directory will be run by the `runMigrations()`
-function in the [index.ts file](./src/index.ts).
 
-If, during initial development, you do not wish to manually generate a migration on each change to customFields etc, you
-can set `dbConnectionOptions.synchronize` to `true`. This will cause the database schema to get automatically updated
-on each start, removing the need for migration files. Note that this is **not** recommended once you have production
-data that you cannot lose.
+Pending migrations can also be run manually using the migration script defined in the project:
 
----
+```
+npm run migrate
+```
 
-You can also run any pending migrations manually, without starting the server via the "vendure migrate" command.
+During initial development, `dbConnectionOptions.synchronize` in `vendure-config.ts` can be set to `true` to automatically synchronize the database schema when the server starts. This can be convenient while developing, but it is **not recommended for production environments**, where migration files should be used to manage schema changes safely.
 
----
+## Kubernetes Migration
+
+Database migrations are handled separately from the Vendure server and worker workloads. The project's `src/migrate.ts` entrypoint is compiled as part of the application build and produces `dist/migrate.js`.
+
+The Kubernetes migration job executes this built entrypoint to apply any pending migrations before the application is started or updated.
+
+This keeps schema changes as an explicit deployment step and prevents multiple application replicas from attempting to run migrations simultaneously.
+
+## CI/CD
+
+### Pull Request Workflow
+
+The pull-request workflow runs when a pull request is created or updated.
+
+The workflow performs validation before the Docker image is built:
+
+```text
+Pull Request
+     │
+     ▼
+Lint & Validate
+ ├── TypeScript typecheck
+ ├── ESLint
+ └── Helm lint
+     │
+     │ success
+     ▼
+Docker Build
+```
+
+The Docker image is built during pull-request validation, but it is not pushed to the container registry.
+
+This ensures the same Dockerfile used for the final image is validated before changes can be merged.
+
+### Main Branch Workflow
+
+Changes pushed to `main` trigger the image publishing workflow.
+
+```text
+Merge / push to main
+        │
+        ▼
+   Docker build
+        │
+        ▼
+     GHCR login
+        │
+        ▼
+ Push image to GHCR
+```
+
+The image is pushed to GitHub Container Registry (`ghcr.io`) using the commit SHA as the image tag.
+
+```text
+ghcr.io/bavdh/vendure-assignment:<commit-sha>
+```
+
+Using the commit SHA creates an immutable image reference. Different commits therefore produce different image tags, which allows a specific build to be selected later for deployment or rollback.
 
 ## Troubleshooting
 

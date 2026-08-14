@@ -17,6 +17,8 @@ spec:
         app: vendure
 
     spec:
+      serviceAccountName: {{ .Release.Name }}-server
+
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
 

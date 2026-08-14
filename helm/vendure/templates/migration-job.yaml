@@ -18,6 +18,8 @@ spec:
         app: vendure-migration
 
     spec:
+      serviceAccountName: {{ .Release.Name }}-migration
+
       restartPolicy: Never
 
       securityContext:

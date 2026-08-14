@@ -17,6 +17,8 @@ spec:
         app: vendure-worker
 
     spec:
+      serviceAccountName: {{ .Release.Name }}-worker
+
       securityContext:
         {{- toYaml .Values.podSecurityContext | nindent 8 }}
 

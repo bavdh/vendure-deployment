@@ -246,6 +246,16 @@ ghcr.io/bavdh/vendure-assignment:<commit-sha>
 
 Using the commit SHA creates an immutable image reference. Different commits therefore produce different image tags, which allows a specific build to be selected later for deployment or rollback.
 
+### Security Considerations
+
+Application workloads do not require access to the Kubernetes API. The Vendure server, worker, and migration Job therefore use dedicated Kubernetes ServiceAccounts with automatic ServiceAccount token mounting disabled.
+
+```bash
+automountServiceAccountToken: false
+```
+
+This prevents Kubernetes API credentials from being automatically mounted into the application containers.
+
 ## Troubleshooting
 
 ### Error: Could not load the "sharp" module using the \[OS\]-x\[Architecture\] runtime when running Vendure server.

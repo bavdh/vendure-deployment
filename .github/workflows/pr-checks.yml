@@ -36,8 +36,8 @@ jobs:
       - name: Run Helm lint
         run: helm lint ./helm/vendure
 
-  build:
-    name: Build
+  docker-build:
+    name: Buld Docker Image
     runs-on: ubuntu-latest
     needs: lint
 
@@ -45,14 +45,9 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Build Docker image
+        uses: docker/build-push-action@v6
         with:
-          node-version: 22
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build application
-        run: npm run build
+          context: .
+          push: false
+          tags: vendure-assignment:pr

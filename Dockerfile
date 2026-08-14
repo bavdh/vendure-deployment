@@ -37,7 +37,7 @@ ENV NODE_ENV=production
 
 COPY package.json package-lock.json ./
 
-RUN npm ci --omit=dev && npm cache clean --force
+RUN npm ci --omit=dev --ignore-scripts && npm cache clean --force
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/static ./static

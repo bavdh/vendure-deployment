@@ -1,0 +1,64 @@
+name: Deploy to Kubernetes
+
+on:
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Docker image tag to deploy
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  deploy:
+    # Prevent deployments from feature branches or other refs.
+    if: github.ref == 'refs/heads/main'
+    name: Deploy
+    runs-on: ubuntu-latest
+
+    environment:
+      name: production
+
+    env:
+      IMAGE_REPOSITORY: ghcr.io/bavdh/vendure-assignment
+      HELM_RELEASE: vendure
+      HELM_CHART: ./helm/vendure
+      K8S_NAMESPACE: vendure
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+
+      - name: Configure Kubernetes
+        run: |
+          mkdir -p "$HOME/.kube"
+          echo "${{ secrets.KUBE_CONFIG }}" > "$HOME/.kube/config"
+          chmod 600 "$HOME/.kube/config"
+
+      - name: Verify cluster access
+        run: kubectl cluster-info
+
+      - name: Deploy with Helm
+        run: |
+          helm upgrade --install "$HELM_RELEASE" "$HELM_CHART" \
+            --namespace "$K8S_NAMESPACE" \
+            --create-namespace \
+            --set-string image.repository="$IMAGE_REPOSITORY" \
+            --set-string image.tag="${{ inputs.image_tag }}" \
+            --set-string db.name="${{ vars.DB_NAME }}" \
+            --set-string db.schema="${{ vars.DB_SCHEMA }}" \
+            --set-string db.username="${{ secrets.DB_USERNAME }}" \
+            --set-string db.password="${{ secrets.DB_PASSWORD }}" \
+            --set-string superadmin.username="${{ vars.SUPERADMIN_USERNAME }}" \
+            --set-string superadmin.password="${{ secrets.SUPERADMIN_PASSWORD }}" \
+            --set-string cookieSecret="${{ secrets.COOKIE_SECRET }}" \
+            --wait \
+            --wait-for-jobs

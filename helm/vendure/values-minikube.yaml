@@ -1,0 +1,24 @@
+image:
+  repository: vendure-assignment
+  tag: production
+  pullPolicy: IfNotPresent
+
+env:
+  appEnv: production
+
+  db:
+    host: postgres
+    port: 5432
+    name: vendure
+    schema: public
+
+  redis:
+    host: redis
+    port: 6379
+
+secrets:
+  dbUsername: change_me 
+  dbPassword: change_me 
+  superadminUsername: change_me 
+  superadminPassword: change_me
+  cookieSecret: change_me 
